@@ -13,7 +13,7 @@
         </n-flex>
         <div class="drag-dom" />
         <n-flex class="right" justify="end">
-          <div class="menu-icon" @click="toggleFullscreen">
+          <div v-if="isElectron" class="menu-icon" @click="toggleFullscreen">
             <SvgIcon :name="isFullscreen ? 'FullscreenExit' : 'Fullscreen'" />
           </div>
           <div v-if="!isFullscreen" class="menu-icon" @click="statusStore.showFullPlayer = false">
@@ -26,7 +26,8 @@
 </template>
 
 <script setup lang="ts">
-import { useStatusStore, useMusicStore } from "@/stores";
+import { useMusicStore, useStatusStore } from "@/stores";
+import { isElectron } from "@/utils/env";
 
 const musicStore = useMusicStore();
 const statusStore = useStatusStore();

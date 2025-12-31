@@ -4,14 +4,22 @@ import { isLogin } from "./auth";
 import { getCookie } from "./cookie";
 import { isDev, isElectron } from "./env";
 
-// 全局地址
+// 获取 API 服务器地址
 // 开发模式: 使用 Vite 代理到本地 Fastify 服务器
-// 生产模式: 使用本地 API 服务器 (由 preload 启动的子进程)
-const baseURL: string = String(isDev ? "/api/netease" : "http://127.0.0.1:36524");
+// 生产模式: 使用本地 API 服务器 (由 preload 启动的子进程,端口动态分配)
+function getBaseURL(): string {
+  if (isDev) {
+    return "/api/netease";
+  }
+
+  // 从 localStorage 读取动态端口,如果没有则使用默认端口
+  const savedPort = localStorage.getItem('api_server_port');
+  const port = savedPort || '36524';
+  return `http://127.0.0.1:${port}`;
+}
 
 // 基础配置
 const server: AxiosInstance = axios.create({
-  baseURL,
   // 允许跨域
   withCredentials: true,
   // 超时时间
@@ -27,6 +35,9 @@ axiosRetry(server, {
 // 请求拦截器
 server.interceptors.request.use(
   (request) => {
+    // 动态设置 baseURL (支持端口变化)
+    request.baseURL = getBaseURL();
+
     // 直接从 localStorage 获取设置,避免 Vue inject() 上下文问题
     const setting = JSON.parse(localStorage.getItem("setting") || "{}");
     if (!request.params) request.params = {};

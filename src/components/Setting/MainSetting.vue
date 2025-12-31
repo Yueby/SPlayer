@@ -7,12 +7,12 @@
       </n-flex>
       <!-- 设置菜单 -->
       <n-scrollbar class="menu-scrollbar">
-        <n-menu
-          v-model:value="activeKey"
-          :options="menuOptions"
-          :indent="10"
-          @update:value="setScrollbar?.scrollTo({ top: 0, behavior: 'smooth' })"
-        />
+      <n-menu
+        v-model:value="activeKey"
+        :options="menuOptions"
+        :indent="10"
+        @update:value="setScrollbar?.scrollTo({ top: 0, behavior: 'smooth' })"
+      />
       </n-scrollbar>
       <!-- 信息 -->
       <div class="power">
@@ -195,7 +195,7 @@ const toGithub = () => {
     top: 0;
     right: 0;
     padding: 20px;
-    z-index: 1;
+    z-index: 10;
   }
   .n-card__content {
     padding: 0;

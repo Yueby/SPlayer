@@ -1,18 +1,18 @@
-import { defineStore } from "pinia";
+import { playlistCatlist } from "@/api/playlist";
 import type {
-  SongType,
-  CoverType,
-  UserDataType,
-  UserLikeDataType,
   CatType,
+  CoverType,
   LoginType,
   SongLevelType,
+  SongType,
+  UserDataType,
+  UserLikeDataType,
 } from "@/types/main";
-import { playlistCatlist } from "@/api/playlist";
-import { cloneDeep, isEmpty } from "lodash-es";
 import { isLogin } from "@/utils/auth";
 import { formatCategoryList } from "@/utils/format";
 import localforage from "localforage";
+import { cloneDeep, isEmpty } from "lodash-es";
+import { defineStore } from "pinia";
 
 interface ListState {
   playList: SongType[];
