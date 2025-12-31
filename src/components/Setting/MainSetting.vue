@@ -6,12 +6,14 @@
         <n-text :depth="3">个性化与全局设置</n-text>
       </n-flex>
       <!-- 设置菜单 -->
-      <n-menu
-        v-model:value="activeKey"
-        :options="menuOptions"
-        :indent="10"
-        @update:value="setScrollbar?.scrollTo({ top: 0, behavior: 'smooth' })"
-      />
+      <n-scrollbar class="menu-scrollbar">
+        <n-menu
+          v-model:value="activeKey"
+          :options="menuOptions"
+          :indent="10"
+          @update:value="setScrollbar?.scrollTo({ top: 0, behavior: 'smooth' })"
+        />
+      </n-scrollbar>
       <!-- 信息 -->
       <div class="power">
         <n-text class="author" :depth="2" @click="toGithub">
@@ -128,8 +130,8 @@ const toGithub = () => {
 .setting {
   display: flex;
   width: 100%;
-  height: 75vh;
-  min-height: 75vh;
+  height: 90vh;
+  min-height: 90vh;
   .set-left {
     display: flex;
     flex-direction: column;
@@ -139,6 +141,7 @@ const toGithub = () => {
     background-color: var(--surface-container-hex);
     .title {
       margin: 10px 0 20px 10px;
+      flex-shrink: 0;
       .n-h1 {
         font-size: 26px;
         font-weight: bold;
@@ -147,12 +150,18 @@ const toGithub = () => {
         margin-bottom: 6px;
       }
     }
+    .menu-scrollbar {
+      flex: 1;
+      overflow: hidden;
+    }
     .n-menu {
       width: 100%;
       padding: 0;
     }
     .power {
-      margin: auto 0 0 10px;
+      margin-top: 20px;
+      padding-left: 10px;
+      flex-shrink: 0;
       .name {
         font-weight: bold;
         margin-right: 6px;

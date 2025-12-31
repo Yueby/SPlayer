@@ -1,28 +1,28 @@
-import { getCookie, removeCookie, setCookies } from "./cookie";
-import type { UserLikeDataType, CoverType, ArtistType, SongType } from "@/types/main";
+import { likeAlbum } from "@/api/album";
+import { likeArtist } from "@/api/artist";
+import { logout, refreshLogin } from "@/api/login";
+import { likePlaylist, playlistTracks } from "@/api/playlist";
+import { radioSub } from "@/api/radio";
+import { dailyRecommend } from "@/api/rec";
+import { likeSong } from "@/api/song";
 import {
   userAccount,
-  userDetail,
-  userSubcount,
-  userLike,
-  userDj,
-  userMv,
-  userArtist,
   userAlbum,
+  userArtist,
+  userDetail,
+  userDj,
+  userLike,
+  userMv,
   userPlaylist,
+  userSubcount,
 } from "@/api/user";
-import { likeSong } from "@/api/song";
-import { formatCoverList, formatArtistsList, formatSongsList } from "@/utils/format";
 import { useDataStore, useMusicStore } from "@/stores";
-import { logout, refreshLogin } from "@/api/login";
+import type { ArtistType, CoverType, SongType, UserLikeDataType } from "@/types/main";
+import { formatArtistsList, formatCoverList, formatSongsList } from "@/utils/format";
 import { debounce, isFunction } from "lodash-es";
-import { isBeforeSixAM } from "./time";
-import { dailyRecommend } from "@/api/rec";
+import { getCookie, removeCookie, setCookies } from "./cookie";
 import { isElectron } from "./env";
-import { likePlaylist, playlistTracks } from "@/api/playlist";
-import { likeArtist } from "@/api/artist";
-import { likeAlbum } from "@/api/album";
-import { radioSub } from "@/api/radio";
+import { isBeforeSixAM } from "./time";
 
 /**
  * 用户是否登录
@@ -73,8 +73,21 @@ export const updateUserData = async () => {
   try {
     if (!isLogin()) return;
     const dataStore = useDataStore();
-    // userId
-    const { profile } = await userAccount();
+    // userId - 添加重试机制
+    let profile: any = null;
+    for (let attempt = 1; attempt <= 3; attempt++) {
+      const data = await userAccount();
+      if (data?.profile) {
+        profile = data.profile;
+        break;
+      }
+      if (attempt < 3) {
+        await new Promise(resolve => setTimeout(resolve, 1000));
+      }
+    }
+    if (!profile) {
+      throw new Error("Failed to get user profile after 3 attempts");
+    }
     const userId = profile.userId;
     // 获取用户信息
     const userDetailData = await userDetail(userId);

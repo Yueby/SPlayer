@@ -107,7 +107,7 @@ interface StatusState {
 
 export const useStatusStore = defineStore("status", {
   state: (): StatusState => ({
-    menuCollapsed: false,
+    menuCollapsed: true,
     searchFocus: false,
     searchInputValue: "",
     showPlayBar: true,

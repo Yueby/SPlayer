@@ -63,7 +63,18 @@ const saveLogin = async (loginData: any, type: LoginType = "qr") => {
     localStorage.setItem("lastLoginTime", Date.now().toString());
     // 获取用户信息
     if (type !== "uid") {
-      await updateUserData();
+      try {
+        await updateUserData();
+      } catch (error) {
+        // 如果获取用户信息失败,尝试使用登录响应中的数据
+        console.warn("Failed to update user data, trying to use login response data");
+        if (loginData.profile) {
+          await updateSpecialUserData(loginData.profile);
+        } else {
+          // 如果登录响应中也没有用户信息,则抛出错误
+          throw error;
+        }
+      }
     } else {
       await updateSpecialUserData(loginData?.profile);
     }

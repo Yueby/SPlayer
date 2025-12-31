@@ -78,8 +78,8 @@
 </template>
 
 <script setup lang="ts">
-import { useMusicStore, useStatusStore, useSettingStore } from "@/stores";
 import { useBlobURLManager } from "@/core/resource/BlobURLManager";
+import { useMusicStore, useSettingStore, useStatusStore } from "@/stores";
 import { isElectron } from "@/utils/env";
 import init from "@/utils/init";
 

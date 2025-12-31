@@ -1,12 +1,13 @@
-import axios, { AxiosInstance, AxiosRequestConfig, AxiosError, AxiosResponse } from "axios";
-import { isDev, isElectron } from "./env";
-import { useSettingStore } from "@/stores";
-import { getCookie } from "./cookie";
-import { isLogin } from "./auth";
+import axios, { AxiosError, AxiosInstance, AxiosRequestConfig, AxiosResponse } from "axios";
 import axiosRetry from "axios-retry";
+import { isLogin } from "./auth";
+import { getCookie } from "./cookie";
+import { isDev, isElectron } from "./env";
 
 // 全局地址
-const baseURL: string = String(isDev ? "/api/netease" : import.meta.env["VITE_API_URL"]);
+// 开发模式: 使用 Vite 代理到本地 Fastify 服务器
+// 生产模式: 使用本地 API 服务器 (由 preload 启动的子进程)
+const baseURL: string = String(isDev ? "/api/netease" : "http://127.0.0.1:36524");
 
 // 基础配置
 const server: AxiosInstance = axios.create({
@@ -26,8 +27,8 @@ axiosRetry(server, {
 // 请求拦截器
 server.interceptors.request.use(
   (request) => {
-    // pinia
-    const settingStore = useSettingStore();
+    // 直接从 localStorage 获取设置,避免 Vue inject() 上下文问题
+    const setting = JSON.parse(localStorage.getItem("setting") || "{}");
     if (!request.params) request.params = {};
     // Cookie
     if (!request.params.noCookie && (isLogin() || getCookie("MUSIC_U") !== null)) {
@@ -39,18 +40,18 @@ server.interceptors.request.use(
       request.params.realIP = "116.25.146.177";
     }
     // 自定义 realIP
-    if (settingStore.useRealIP) {
-      if (settingStore.realIP) {
-        request.params.realIP = settingStore.realIP;
+    if (setting.useRealIP) {
+      if (setting.realIP) {
+        request.params.realIP = setting.realIP;
       } else {
         request.params.randomCNIP = true;
       }
     }
     // proxy
-    if (settingStore.proxyProtocol !== "off") {
-      const protocol = settingStore.proxyProtocol.toLowerCase();
-      const server = settingStore.proxyServe;
-      const port = settingStore.proxyPort;
+    if (setting.proxyProtocol && setting.proxyProtocol !== "off") {
+      const protocol = setting.proxyProtocol.toLowerCase();
+      const server = setting.proxyServe;
+      const port = setting.proxyPort;
       const proxy = `${protocol}://${server}:${port}`;
       if (proxy) request.params.proxy = proxy;
     }
