@@ -117,10 +117,9 @@ onBeforeUnmount(() => {
   align-items: center;
   justify-content: center;
   width: 70%;
-  max-width: min(50vh, 70vw);
-  height: auto;
+  max-width: 50vh;
+  max-height: 70vh;
   aspect-ratio: 1 / 1;
-  flex-shrink: 0;
   transition:
     transform 0.5s cubic-bezier(0.34, 1.56, 0.64, 1),
     width 0.3s;
