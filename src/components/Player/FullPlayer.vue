@@ -79,7 +79,7 @@
 </template>
 
 <script setup lang="ts">
-import { useStatusStore, useMusicStore, useSettingStore } from "@/stores";
+import { useMusicStore, useSettingStore, useStatusStore } from "@/stores";
 import { isElectron } from "@/utils/env";
 
 const musicStore = useMusicStore();
@@ -256,6 +256,7 @@ onBeforeUnmount(() => {
       flex-direction: column;
       align-items: center;
       justify-content: center;
+      transform: scale(0.85);
       transition:
         opacity 0.5s cubic-bezier(0.34, 1.56, 0.64, 1),
         transform 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
@@ -269,6 +270,7 @@ onBeforeUnmount(() => {
       max-width: 50%;
       display: flex;
       flex-direction: column;
+      transform: scale(0.9);
       transition: opacity 0.3s;
       transition-delay: 0.5s;
       .player-data {

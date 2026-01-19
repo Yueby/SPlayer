@@ -115,11 +115,11 @@
 </template>
 
 <script setup lang="ts">
+import { useTimeFormat } from "@/composables/useTimeFormat";
 import { usePlayerController } from "@/core/player/PlayerController";
 import { useSongManager } from "@/core/player/SongManager";
 import { useDataStore, useMusicStore, useStatusStore } from "@/stores";
 import { toLikeSong } from "@/utils/auth";
-import { useTimeFormat } from "@/composables/useTimeFormat";
 import { openDownloadSong, openPlaylistAdd } from "@/utils/modal";
 
 const dataStore = useDataStore();
@@ -137,6 +137,8 @@ const { timeDisplay, toggleTimeFormat } = useTimeFormat();
   width: 100%;
   height: 80px;
   overflow: hidden;
+  transform: scale(1);
+  transform-origin: center bottom;
   .control-content {
     width: 100%;
     height: 100%;

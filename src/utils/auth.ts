@@ -16,6 +16,7 @@ import {
   userPlaylist,
   userSubcount,
 } from "@/api/user";
+import router from "@/router";
 import { useDataStore, useMusicStore } from "@/stores";
 import type { ArtistType, CoverType, SongType, UserLikeDataType } from "@/types/main";
 import { formatArtistsList, formatCoverList, formatSongsList } from "@/utils/format";
@@ -23,7 +24,6 @@ import { debounce, isFunction, type DebouncedFunc } from "lodash-es";
 import { getCookie, removeCookie, setCookies } from "./cookie";
 import { isElectron } from "./env";
 import { isBeforeSixAM } from "./time";
-import router from "@/router";
 
 /**
  * 用户是否登录

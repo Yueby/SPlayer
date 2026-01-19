@@ -50,7 +50,7 @@
 
 <script setup lang="ts">
 import { useMusicStore, useSettingStore, useStatusStore } from "@/stores";
-import { openSetting, openCopyLyrics } from "@/utils/modal";
+import { openCopyLyrics, openSetting } from "@/utils/modal";
 
 const musicStore = useMusicStore();
 const settingStore = useSettingStore();
@@ -110,6 +110,7 @@ const resetOffset = () => {
   width: 80px;
   padding: 20% 0;
   opacity: 0;
+  transform: scale(0.9);
   transition: opacity 0.3s;
   .divider {
     height: 2px;

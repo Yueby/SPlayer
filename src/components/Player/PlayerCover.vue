@@ -33,7 +33,7 @@
 
 <script setup lang="ts">
 import { songDynamicCover } from "@/api/song";
-import { useSettingStore, useStatusStore, useMusicStore } from "@/stores";
+import { useMusicStore, useSettingStore, useStatusStore } from "@/stores";
 import { isLogin } from "@/utils/auth";
 import { isEmpty } from "lodash-es";
 
@@ -117,9 +117,10 @@ onBeforeUnmount(() => {
   align-items: center;
   justify-content: center;
   width: 70%;
-  max-width: 50vh;
-  max-height: 70vh;
+  max-width: min(50vh, 70vw);
+  height: auto;
   aspect-ratio: 1 / 1;
+  flex-shrink: 0;
   transition:
     transform 0.5s cubic-bezier(0.34, 1.56, 0.64, 1),
     width 0.3s;
