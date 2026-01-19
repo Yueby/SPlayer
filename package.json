@@ -145,6 +145,7 @@
       "electron",
       "electron-winstaller",
       "esbuild",
+      "sharp",
       "vue-demi"
     ],
     "ignoredBuiltDependencies": [
