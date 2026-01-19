@@ -12,7 +12,7 @@
 | ------- | --------------------------------- |
 | Windows | `.exe` (安装版) / `.zip` (便携版) |
 | macOS   | `.dmg`                            |
-| Linux   | `.AppImage` / `.deb`              |
+| Linux   | `.AppImage` / `.deb` / ...        |
 
 ### Docker 部署 (仅 Web 版)
 
@@ -143,7 +143,7 @@ pnpm install
 cp .env.example .env
 # 编辑 .env 文件，配置 API 地址
 
-# 4. 构建原生模块 (Windows)
+# 4. 构建原生模块
 pnpm build:native
 
 # 5. 启动开发服务器
@@ -184,10 +184,6 @@ pnpm build:win -- --x64 --arm64
 - **ESLint**: 代码规范检查
 - **Prettier**: 代码格式化
 - **rust-analyzer**: Rust 语言支持 (开发原生模块时)
-
-#### 配置文件
-
-项目已配置 `.vscode/settings.json`，打开项目时 VS Code 会自动应用推荐设置。
 
 ## ⚠️ 重要提示
 

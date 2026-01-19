@@ -1,18 +1,20 @@
 <template>
   <div class="local">
-    <div class="title">
-      <n-text class="keyword">本地歌曲</n-text>
-      <n-flex class="status">
-        <n-text class="item">
-          <SvgIcon name="Music" :depth="3" />
-          <n-number-animation :from="0" :to="localStore.localSongs?.length || 0" /> 首歌曲
-        </n-text>
-        <n-text class="item">
-          <SvgIcon name="Storage" :depth="3" />
-          <n-number-animation :from="0" :to="allMusicSize" :precision="2" /> GB
-        </n-text>
-      </n-flex>
-    </div>
+    <Transition name="fade" mode="out-in">
+      <div :key="pageTitle" class="title">
+        <n-text class="keyword">{{ pageTitle }}</n-text>
+        <n-flex class="status">
+          <n-text class="item">
+            <SvgIcon name="Music" :depth="3" />
+            <n-number-animation :from="0" :to="listData?.length || 0" /> 首歌曲
+          </n-text>
+          <n-text class="item">
+            <SvgIcon name="Storage" :depth="3" />
+            <n-number-animation :from="0" :to="allMusicSize" :precision="2" /> GB
+          </n-text>
+        </n-flex>
+      </div>
+    </Transition>
     <n-flex class="menu" justify="space-between">
       <n-flex class="left" align="flex-end">
         <n-button
@@ -23,7 +25,7 @@
           strong
           secondary
           round
-          v-debounce="() => player.updatePlayList(listData)"
+          v-debounce="handlePlay"
         >
           <template #icon>
             <SvgIcon name="Play" />
@@ -53,14 +55,16 @@
           </n-button>
         </n-dropdown>
         <!-- 文件夹选择 -->
-        <n-select
-          v-if="isLocalSongsRoute && settingStore.localFolderDisplayMode === 'dropdown'"
-          v-model:value="selectedFolder"
-          :options="folderOptions"
-          class="folder-select"
-          size="medium"
-          style="width: 200px"
-        />
+        <Transition name="fade" mode="out-in">
+          <n-select
+            v-if="!isLocalFoldersRoute && settingStore.localFolderDisplayMode === 'dropdown'"
+            v-model:value="selectedFolder"
+            :options="folderOptions"
+            class="folder-select"
+            size="medium"
+            style="width: 200px"
+          />
+        </Transition>
       </n-flex>
       <n-flex class="right" justify="end">
         <!-- 模糊搜索 -->
@@ -79,6 +83,7 @@
           </template>
         </n-input>
         <n-tabs
+          v-if="settingStore.useOnlineService"
           v-model:value="localType"
           class="tabs"
           type="segment"
@@ -87,13 +92,7 @@
           <n-tab :disabled="tabsDisabled" name="local-songs"> 单曲 </n-tab>
           <n-tab :disabled="tabsDisabled" name="local-artists"> 歌手 </n-tab>
           <n-tab :disabled="tabsDisabled" name="local-albums"> 专辑 </n-tab>
-          <n-tab
-            v-if="settingStore.localFolderDisplayMode === 'tab'"
-            :disabled="tabsDisabled"
-            name="local-folders"
-          >
-            文件夹
-          </n-tab>
+          <n-tab :disabled="tabsDisabled" name="local-folders"> 文件夹 </n-tab>
         </n-tabs>
       </n-flex>
     </n-flex>
@@ -101,7 +100,13 @@
     <RouterView v-if="!showEmptyState" v-slot="{ Component }">
       <Transition :name="`router-${settingStore.routeAnimation}`" mode="out-in">
         <KeepAlive v-if="settingStore.useKeepAlive">
-          <component :is="Component" :data="listData" :loading="loading" :list-version="listVersion" class="router-view" />
+          <component
+            :is="Component"
+            :data="listData"
+            :loading="loading"
+            :list-version="listVersion"
+            class="router-view"
+          />
         </KeepAlive>
         <component v-else :is="Component" :data="listData" :loading="loading" class="router-view" />
       </Transition>
@@ -129,24 +134,26 @@
       transform-origin="center"
       style="width: 600px"
     >
-      <n-list class="local-list" hoverable clickable bordered>
-        <template #header>
-          <n-text>请选择本地音乐文件夹，将自动扫描您添加的目录，歌曲增删实时同步</n-text>
-        </template>
-        <n-list-item v-for="(item, index) in settingStore.localFilesPath" :key="index">
-          <template #prefix>
-            <SvgIcon :size="20" name="Folder" />
-          </template>
-          <template #suffix>
-            <n-button :focusable="false" quaternary @click="changeLocalMusicPath(index)">
-              <template #icon>
-                <SvgIcon :size="20" name="Delete" />
-              </template>
-            </n-button>
-          </template>
-          <n-thing :title="item" />
-        </n-list-item>
-      </n-list>
+      <n-text class="local-list-tip"
+        >请选择本地音乐文件夹，将自动扫描您添加的目录，歌曲增删实时同步</n-text
+      >
+      <n-scrollbar style="max-height: 50vh">
+        <n-list class="local-list" hoverable clickable bordered>
+          <n-list-item v-for="(item, index) in settingStore.localFilesPath" :key="index">
+            <template #prefix>
+              <SvgIcon :size="20" name="Folder" />
+            </template>
+            <template #suffix>
+              <n-button :focusable="false" quaternary @click="changeLocalMusicPath(index)">
+                <template #icon>
+                  <SvgIcon :size="20" name="Delete" />
+                </template>
+              </n-button>
+            </template>
+            <n-thing :title="item" />
+          </n-list-item>
+        </n-list>
+      </n-scrollbar>
       <template #footer>
         <n-flex justify="center">
           <n-button class="add-path" strong secondary @click="changeLocalMusicPath()">
@@ -195,7 +202,7 @@ const listVersion = ref<number>(0);
 // 文件夹选项（基于配置的目录列表）
 const folderOptions = computed(() => {
   const options: { label: string; value: string }[] = [{ label: "全部文件夹", value: "all" }];
-  
+
   // 基于配置的目录列表生成选项
   settingStore.localFilesPath.forEach((folderPath) => {
     if (!folderPath) return;
@@ -245,6 +252,21 @@ const listData = computed<SongType[]>(() => {
   return getFilteredData();
 });
 
+// 播放事件总线
+const localPlayEventBus = useEventBus("local-play");
+
+// 如果在单曲/文件夹页面，直接播放 listData
+// 否则通知子组件播放
+const handlePlay = () => {
+  const routeName = router.currentRoute.value?.name as string;
+  if (routeName === "local-songs" || routeName === "local-folders" || routeName === "local") {
+    player.updatePlayList(listData.value);
+  } else {
+    // 通知子组件播放其当前列表
+    localPlayEventBus.emit();
+  }
+};
+
 // 是否存在配置目录与歌曲
 const hasConfig = computed<boolean>(() => settingStore.localFilesPath.length > 0);
 const hasSong = computed<boolean>(() => localStore.localSongs.length > 0);
@@ -254,6 +276,31 @@ const tabsDisabled = computed<boolean>(() => !hasConfig.value || !hasSong.value)
 const isLocalSongsRoute = computed<boolean>(
   () => (router.currentRoute.value?.name as string) === "local-songs",
 );
+
+// 当前是否在本地文件夹路由
+const isLocalFoldersRoute = computed<boolean>(
+  () => (router.currentRoute.value?.name as string) === "local-folders",
+);
+
+// 页面标题
+const pageTitle = computed<string>(() => {
+  if (settingStore.useOnlineService) return "本地歌曲";
+  // 本地模式
+  const routeName = router.currentRoute.value?.name as string;
+  switch (routeName) {
+    case "local-songs":
+    case "local":
+      return "音乐库";
+    case "local-albums":
+      return "专辑";
+    case "local-artists":
+      return "艺术家";
+    case "local-folders":
+      return "文件夹";
+    default:
+      return "音乐库";
+  }
+});
 
 // 是否展示空状态
 const showEmptyState = computed<boolean>(() => isLocalSongsRoute.value && !hasSong.value);
@@ -265,9 +312,9 @@ const getMusicFolder = async (): Promise<string[]> => {
   return paths.filter((p) => p && p.trim() !== "");
 };
 
-// 全部音乐大小
+// 全部音乐大小（基于筛选后的数据）
 const allMusicSize = computed<number>(() => {
-  const total = localStore.localSongs.reduce((total, song) => (total += song?.size || 0), 0);
+  const total = listData.value.reduce((total, song) => (total += song?.size || 0), 0);
   return Number((total / 1024).toFixed(2));
 });
 
@@ -584,6 +631,11 @@ onUnmounted(() => {
     overflow: hidden;
     max-height: calc((var(--layout-height) - 132) * 1px);
   }
+}
+.local-list-tip {
+  display: block;
+  margin-bottom: 12px;
+  opacity: 0.8;
 }
 .local-list {
   :deep(.n-list-item__prefix) {

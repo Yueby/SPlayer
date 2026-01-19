@@ -68,6 +68,7 @@ const initIpc = () => {
             lrcData: musicStore.songLyric.lrcData ?? [],
             yrcData: musicStore.songLyric.yrcData ?? [],
             lyricIndex: statusStore.lyricIndex,
+            lyricLoading: statusStore.lyricLoading,
           }),
         );
       }
@@ -92,6 +93,35 @@ const initIpc = () => {
     window.electron.ipcRenderer.on("protocol-url", (_, url) => {
       console.log("📡 Received protocol url:", url);
       handleProtocolUrl(url);
+    });
+    // 请求播放信息
+    window.electron.ipcRenderer.on("request-track-info", () => {
+      const musicStore = useMusicStore();
+      const statusStore = useStatusStore();
+      const { name, artist, album } = getPlayerInfoObj() || {};
+      // 获取原始对象
+      const playSong = toRaw(musicStore.playSong);
+      const songLyric = statusStore.lyricLoading
+        ? { lrcData: [], yrcData: [] }
+        : toRaw(musicStore.songLyric);
+      window.electron.ipcRenderer.send(
+        "return-track-info",
+        cloneDeep({
+          playStatus: statusStore.playStatus,
+          playName: name,
+          artistName: artist,
+          albumName: album,
+          currentTime: statusStore.currentTime,
+          // 音量及播放速率
+          volume: statusStore.playVolume,
+          playRate: statusStore.playRate,
+          ...playSong,
+          // 歌词及加载状态
+          lyricLoading: statusStore.lyricLoading,
+          lyricIndex: statusStore.lyricIndex,
+          ...songLyric,
+        }),
+      );
     });
   } catch (error) {
     console.log(error);

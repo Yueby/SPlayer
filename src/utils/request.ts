@@ -44,11 +44,7 @@ server.interceptors.request.use(
     // Cookie
     if (!request.params.noCookie && (isLogin() || getCookie("MUSIC_U") !== null)) {
       const cookie = `MUSIC_U=${getCookie("MUSIC_U")};`;
-      request.params.cookie = encodeURIComponent(cookie);
-    }
-    // realIP
-    if (!isElectron && !request.url?.includes("/login")) {
-      request.params.realIP = "116.25.146.177";
+      request.params.cookie = cookie;
     }
     // 自定义 realIP
     if (setting.useRealIP) {

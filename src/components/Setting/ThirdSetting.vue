@@ -5,20 +5,11 @@
       <n-h3 prefix="bar"> 系统集成 </n-h3>
       <n-card class="set-item">
         <div class="label">
-          <n-text class="name">开启 SMTC</n-text>
-          <n-text class="tip" :depth="3">与系统集成以显示媒体元数据</n-text>
+          <n-text class="name">开启系统音频集成</n-text>
+          <n-text class="tip" :depth="3">与系统集成以显示媒体元数据，支持高清封面显示</n-text>
         </div>
         <n-switch v-model:value="settingStore.smtcOpen" class="set" :round="false" />
       </n-card>
-      <n-collapse-transition :show="settingStore.smtcOpen && isElectron && isWin">
-        <n-card class="set-item">
-          <div class="label">
-            <n-text class="name">原生 SMTC 支持</n-text>
-            <n-text class="tip" :depth="3"> 使用原生插件与系统交互，支持高清封面显示 </n-text>
-          </div>
-          <n-switch v-model:value="settingStore.enableNativeSmtc" class="set" :round="false" />
-        </n-card>
-      </n-collapse-transition>
     </div>
     <div class="set-list">
       <n-h3 prefix="bar"> Last.fm 集成 </n-h3>
@@ -144,16 +135,16 @@
         </n-card>
         <n-card class="set-item">
           <div class="label">
-            <n-text class="name">显示模式</n-text>
-            <n-text class="tip" :depth="3">选择在 Discord 状态中展示的内容层级</n-text>
+            <n-text class="name">简略状态显示</n-text>
+            <n-text class="tip" :depth="3">不打开详细信息面板时，在用户名下方显示的小字</n-text>
           </div>
           <n-select
             class="set"
             v-model:value="settingStore.discordRpc.displayMode"
             :options="[
-              { label: '仅歌曲名', value: 'name' },
-              { label: '完整信息 (歌曲名/歌手)', value: 'details' },
-              { label: '仅播放状态', value: 'state' },
+              { label: '应用名', value: 'Name' },
+              { label: '歌曲名', value: 'Details' },
+              { label: '歌手名', value: 'State' },
             ]"
             @update:value="handleDiscordConfigUpdate"
           />
@@ -208,10 +199,10 @@
 </template>
 
 <script setup lang="ts">
-import { useSettingStore } from "@/stores";
 import { getAuthToken, getAuthUrl, getSession } from "@/api/lastfm";
-import { isElectron, isWin } from "@/utils/env";
-import { enableDiscordRpc, disableDiscordRpc, updateDiscordConfig } from "@/core/player/PlayerIpc";
+import { disableDiscordRpc, enableDiscordRpc, updateDiscordConfig } from "@/core/player/PlayerIpc";
+import { useSettingStore } from "@/stores";
+import { isElectron } from "@/utils/env";
 
 const settingStore = useSettingStore();
 

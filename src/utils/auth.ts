@@ -19,10 +19,11 @@ import {
 import { useDataStore, useMusicStore } from "@/stores";
 import type { ArtistType, CoverType, SongType, UserLikeDataType } from "@/types/main";
 import { formatArtistsList, formatCoverList, formatSongsList } from "@/utils/format";
-import { debounce, isFunction } from "lodash-es";
+import { debounce, isFunction, type DebouncedFunc } from "lodash-es";
 import { getCookie, removeCookie, setCookies } from "./cookie";
 import { isElectron } from "./env";
 import { isBeforeSixAM } from "./time";
+import router from "@/router";
 
 /**
  * 用户是否登录
@@ -34,10 +35,8 @@ export const isLogin = (): 0 | 1 | 2 => {
   if (dataStore.loginType === "uid") return 2;
   return getCookie("MUSIC_U") ? 1 : 0;
 };
-
 // 退出登录
-export const toLogout = async () => {
-  const router = useRouter();
+export const toLogout = async (): Promise<void> => {
   const dataStore = useDataStore();
   await logout();
   // 去除 cookie
@@ -205,8 +204,8 @@ export const updateUserLikeMvs = async () => {
 };
 
 // 喜欢歌曲
-export const toLikeSong = debounce(
-  async (song: SongType, like: boolean) => {
+export const toLikeSong: DebouncedFunc<(song: SongType, like: boolean) => Promise<void>> = debounce(
+  async (song: SongType, like: boolean): Promise<void> => {
     try {
       if (!isLogin()) {
         window.$message.warning("请登录后使用");
@@ -252,9 +251,9 @@ const toLikeSomething = (
   thingName: string,
   request: () => (id: number, t: 1 | 2) => Promise<{ code: number }>,
   update: () => Promise<void>,
-) =>
+): DebouncedFunc<(id: number, like: boolean) => Promise<void>> =>
   debounce(
-    async (id: number, like: boolean) => {
+    async (id: number, like: boolean): Promise<void> => {
       // 错误情况
       if (!id) return;
       if (!isLogin()) {

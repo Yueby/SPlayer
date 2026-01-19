@@ -37,13 +37,46 @@ class SongManager {
   private nextPrefetch: AudioSource | undefined;
 
   /**
+   * 预加载封面图片
+   * @param song 歌曲信息
+   */
+  private prefetchCover(song: SongType): void {
+    if (!song || song.path) return; // 本地歌曲跳过
+
+    const coverUrls: string[] = [];
+
+    // 收集需要预加载的封面 URL
+    if (song.coverSize) {
+      // 优先预加载大尺寸封面
+      if (song.coverSize.xl) coverUrls.push(song.coverSize.xl);
+      if (song.coverSize.l) coverUrls.push(song.coverSize.l);
+    }
+    if (song.cover && !coverUrls.includes(song.cover)) {
+      coverUrls.push(song.cover);
+    }
+    // 预加载图片
+    coverUrls.forEach((url) => {
+      if (!url || !url.startsWith("http")) return;
+      const img = new Image();
+      // 清理
+      const cleanup = () => {
+        img.onload = null;
+        img.onerror = null;
+      };
+      img.onload = cleanup;
+      img.onerror = cleanup;
+      img.src = url;
+    });
+  }
+
+  /**
    * 检查本地缓存
    * @param id 歌曲id
    * @param quality 音质
    */
   private checkLocalCache = async (id: number, quality?: QualityType): Promise<string | null> => {
     const settingStore = useSettingStore();
-    if (isElectron && settingStore.cacheEnabled) {
+    if (isElectron && settingStore.cacheEnabled && settingStore.songCacheEnabled) {
       try {
         const cachePath = await window.electron.ipcRenderer.invoke(
           "music-cache-check",
@@ -69,7 +102,7 @@ class SongManager {
    */
   private triggerCacheDownload = (id: number, url: string, quality?: QualityType | string) => {
     const settingStore = useSettingStore();
-    if (isElectron && settingStore.cacheEnabled && url) {
+    if (isElectron && settingStore.cacheEnabled && settingStore.songCacheEnabled && url) {
       window.electron.ipcRenderer.invoke("music-cache-download", id, url, quality || "standard");
     }
   };
@@ -189,6 +222,9 @@ class SongManager {
       const nextSong = playList[nextIndex];
       if (!nextSong) return;
 
+      // 预加载封面图片
+      this.prefetchCover(nextSong);
+
       // 本地歌曲跳过
       if (nextSong.path) return;
 
@@ -254,7 +290,8 @@ class SongManager {
         console.error("❌ 本地文件不存在");
         return { id: song.id, url: undefined };
       }
-      return { id: song.id, url: `file://${song.path}` };
+      const encodedPath = song.path.replace(/#/g, "%23").replace(/\?/g, "%3F");
+      return { id: song.id, url: `file://${encodedPath}` };
     }
 
     // 在线歌曲

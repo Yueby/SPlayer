@@ -7,7 +7,7 @@
         :content-style="{
           'flex-direction': 'column',
           'align-items': settingStore.lyricsPosition,
-          '--font-weight': settingStore.lyricFontBold ? 'bold' : 'normal',
+          '--font-weight': settingStore.lyricFontWeight,
           '--font-size': settingStore.lyricFontSize,
           '--font-tran-size': tranFontSize,
           '--font-roma-size': romaFontSize,
@@ -23,7 +23,7 @@
       >
         <n-card class="warning" v-if="settingStore.useAMLyrics">
           <n-text>
-            你已使用 Apple-Music-like Lyrics，实际显示效果可能与此处的预览有较大差别
+            正在使用 Apple Music-like Lyrics，实际显示效果可能与此处的预览有较大差别
           </n-text>
         </n-card>
         <div v-for="item in 2" :key="item" :class="['lrc-item', { on: item === 2 }]">
@@ -136,10 +136,16 @@
       </n-card>
       <n-card class="set-item">
         <div class="label">
-          <n-text class="name">歌词字体加粗</n-text>
-          <n-text class="tip" :depth="3">是否将歌词字体加粗显示，部分字体可能显示异常</n-text>
+          <n-text class="name">歌词字重设置</n-text>
+          <n-text class="tip" :depth="3">设置歌词显示的字重，部分字体可能不支持所有字重</n-text>
         </div>
-        <n-switch v-model:value="settingStore.lyricFontBold" class="set" :round="false" />
+        <n-input-number
+          v-model:value="settingStore.lyricFontWeight"
+          :min="100"
+          :max="900"
+          :step="100"
+          class="set"
+        />
       </n-card>
       <n-card class="set-item">
         <div class="label">
@@ -205,6 +211,26 @@
         <n-switch v-model:value="settingStore.showYrc" class="set" :round="false" />
       </n-card>
       <n-collapse-transition :show="settingStore.showYrc">
+        <n-card v-if="isElectron" class="set-item">
+          <div class="label">
+            <n-text class="name">优先使用 QM 歌词</n-text>
+            <n-text class="tip" :depth="3"> 优先从 QM 获取逐字歌词，模糊搜索，可能不准确 </n-text>
+          </div>
+          <n-switch v-model:value="settingStore.preferQQMusicLyric" class="set" :round="false" />
+        </n-card>
+        <n-card v-if="isElectron" class="set-item">
+          <div class="label">
+            <n-text class="name">本地歌曲使用 QM 歌词</n-text>
+            <n-text class="tip" :depth="3">
+              为本地歌曲从 QM 匹配逐字歌词，如已有 TTML 歌词则跳过
+            </n-text>
+          </div>
+          <n-switch
+            v-model:value="settingStore.localLyricQQMusicMatch"
+            class="set"
+            :round="false"
+          />
+        </n-card>
         <n-card class="set-item">
           <div class="label">
             <n-text class="name">显示逐字歌词动画</n-text>
@@ -222,23 +248,13 @@
         <div class="label">
           <n-text class="name">显示歌词翻译</n-text>
         </div>
-        <n-switch
-          v-model:value="settingStore.showTran"
-          class="set"
-          :round="false"
-          :disabled="settingStore.useAMLyrics"
-        />
+        <n-switch v-model:value="settingStore.showTran" class="set" :round="false" />
       </n-card>
       <n-card class="set-item">
         <div class="label">
           <n-text class="name">显示歌词音译</n-text>
         </div>
-        <n-switch
-          v-model:value="settingStore.showRoma"
-          class="set"
-          :round="false"
-          :disabled="settingStore.useAMLyrics"
-        />
+        <n-switch v-model:value="settingStore.showRoma" class="set" :round="false" />
       </n-card>
       <n-card class="set-item">
         <div class="label">
@@ -293,9 +309,9 @@
             歌词支持逐字、翻译、音译等功能，将会在下一首歌生效
           </n-text>
         </div>
-        <n-switch v-model:value="settingStore.enableTTMLLyric" class="set" :round="false" />
+        <n-switch v-model:value="settingStore.enableOnlineTTMLLyric" class="set" :round="false" />
       </n-card>
-      <n-collapse-transition :show="settingStore.enableTTMLLyric">
+      <n-collapse-transition :show="settingStore.enableOnlineTTMLLyric">
         <n-card class="set-item">
           <div class="label">
             <n-text class="name">AMLL TTML DB 地址</n-text>
@@ -326,7 +342,7 @@
           </div>
           <n-switch v-model:value="settingStore.enableExcludeTTML" class="set" :round="false" />
         </n-card>
-        <n-card class="set-item">
+        <n-card v-if="isElectron" class="set-item">
           <div class="label">
             <n-text class="name">本地歌词排除</n-text>
             <n-text class="tip" :depth="3">
@@ -398,6 +414,12 @@
             :step="0.01"
             :round="false"
           />
+        </n-card>
+        <n-card class="set-item">
+          <div class="label">
+            <n-text class="name">显示逐字音译</n-text>
+          </div>
+          <n-switch v-model:value="settingStore.showWordsRoma" class="set" :round="false" />
         </n-card>
       </n-collapse-transition>
     </div>
@@ -477,31 +499,7 @@
           <n-text class="name">歌词字体</n-text>
           <n-text class="tip" :depth="3"> 更改桌面歌词字体 </n-text>
         </div>
-        <n-flex>
-          <Transition name="fade" mode="out-in">
-            <n-button
-              v-if="desktopLyricConfig.fontFamily !== 'system-ui'"
-              type="primary"
-              strong
-              secondary
-              @click="
-                () => {
-                  desktopLyricConfig.fontFamily = 'system-ui';
-                  saveDesktopLyricConfig();
-                }
-              "
-            >
-              恢复默认
-            </n-button>
-          </Transition>
-          <n-select
-            v-model:value="desktopLyricConfig.fontFamily"
-            :options="allFontsData"
-            class="set"
-            filterable
-            @update:value="saveDesktopLyricConfig"
-          />
-        </n-flex>
+        <n-button type="primary" strong secondary @click="openFontManager">配置</n-button>
       </n-card>
       <n-card class="set-item">
         <div class="label">
@@ -529,12 +527,14 @@
       </n-card>
       <n-card class="set-item">
         <div class="label">
-          <n-text class="name">文字加粗</n-text>
-          <n-text class="tip" :depth="3">是否加粗桌面歌词文字</n-text>
+          <n-text class="name">文字字重</n-text>
+          <n-text class="tip" :depth="3">设置桌面歌词显示的字重</n-text>
         </div>
-        <n-switch
-          v-model:value="desktopLyricConfig.fontIsBold"
-          :round="false"
+        <n-input-number
+          v-model:value="desktopLyricConfig.fontWeight"
+          :min="100"
+          :max="900"
+          :step="100"
           class="set"
           @update:value="saveDesktopLyricConfig"
         />
@@ -608,6 +608,21 @@
           @update:value="saveDesktopLyricConfig"
         />
       </n-card>
+      <n-collapse-transition :show="desktopLyricConfig.textBackgroundMask">
+        <n-card class="set-item">
+          <div class="label">
+            <n-text class="name">遮罩颜色</n-text>
+            <n-text class="tip" :depth="3">设置背景遮罩的颜色和透明度</n-text>
+          </div>
+          <n-color-picker
+            v-model:value="desktopLyricConfig.backgroundMaskColor"
+            :show-alpha="true"
+            :modes="['rgb', 'hex']"
+            class="set"
+            @complete="saveDesktopLyricConfig"
+          />
+        </n-card>
+      </n-collapse-transition>
       <n-card class="set-item">
         <div class="label">
           <n-text class="name">始终展示播放信息</n-text>
@@ -639,7 +654,6 @@ import { isElectron } from "@/utils/env";
 import { openLyricExclude, openAMLLServer, openFontManager } from "@/utils/modal";
 import { LyricConfig } from "@/types/desktop-lyric";
 import { usePlayerController } from "@/core/player/PlayerController";
-import { SelectOption } from "naive-ui";
 import defaultDesktopLyricConfig from "@/assets/data/lyricConfig";
 
 const props = defineProps<{ scrollTo?: string }>();
@@ -651,20 +665,19 @@ const settingStore = useSettingStore();
 // 桌面歌词区域引用
 const desktopLyricRef = ref<HTMLElement | null>(null);
 
-// 全部字体
-const allFontsData = ref<SelectOption[]>([]);
-
 /**
  * 创建响应式字体大小计算属性
  * 当启用 AMLL 时，翻译和音译的字体大小会根据主歌词大小自动调整
  */
-const fontSizeComputed = (key: string) => computed({
-  get: () => settingStore.useAMLyrics ?
-    // AMLL 会为翻译和音译设置 `font-size: max(.5em, 10px);`
-    Math.max(0.5 * settingStore.lyricFontSize, 10) :
-    settingStore[key],
-  set: (value) => settingStore[key] = value,
-});
+const fontSizeComputed = (key: string) =>
+  computed({
+    get: () =>
+      settingStore.useAMLyrics
+        ? // AMLL 会为翻译和音译设置 `font-size: max(.5em, 10px);`
+          Math.max(0.5 * settingStore.lyricFontSize, 10)
+        : settingStore[key],
+    set: (value) => (settingStore[key] = value),
+  });
 
 // 真实显示的翻译歌词字体大小
 const tranFontSize = fontSizeComputed("lyricTranFontSize");
@@ -673,8 +686,9 @@ const tranFontSize = fontSizeComputed("lyricTranFontSize");
 const romaFontSize = fontSizeComputed("lyricRomaFontSize");
 
 // 显示翻译和音译歌词字体大小被禁用的原因
-const tranFontSizeTitle = computed(() => settingStore.useAMLyrics ?
-  "翻译和音译歌词大小由 Apple Music-like Lyrics 自动设置" : "")
+const tranFontSizeTitle = computed(() =>
+  settingStore.useAMLyrics ? "翻译和音译歌词大小由 Apple Music-like Lyrics 自动设置" : "",
+);
 
 // 桌面歌词配置
 const desktopLyricConfig = reactive<LyricConfig>({ ...defaultDesktopLyricConfig });

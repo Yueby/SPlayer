@@ -52,7 +52,7 @@ interface StatusState {
   };
   /** 纯净歌词模式 */
   pureLyricMode: boolean;
-  /** 是否使用 TTML 歌词 */
+  /** 当前是否正使用 TTML 歌词 */
   usingTTMLLyric: boolean;
   /** 当前歌曲音质 */
   songQuality: QualityType | undefined;
@@ -98,6 +98,8 @@ interface StatusState {
     time: number;
     /** 剩余时长（秒） */
     remainTime: number;
+    /** 目标结束时间戳（毫秒） */
+    endTime: number;
     /** 等待歌曲结束 */
     waitSongEnd: boolean;
   };
@@ -146,6 +148,7 @@ export const useStatusStore = defineStore("status", {
       enable: false,
       time: 30,
       remainTime: 0,
+      endTime: 0,
       waitSongEnd: true,
     },
     developerMode: false,
@@ -255,13 +258,12 @@ export const useStatusStore = defineStore("status", {
     },
     /**
      * 切换随机模式
-     * 顺序: Off -> On -> Heartbeat -> Off
+     * 顺序: Off -> On -> Off
+     * @deprecated 心跳模式只能通过菜单开启，不再通过此方法切换
      */
     toggleShuffle() {
       if (this.shuffleMode === "off") {
         this.shuffleMode = "on";
-      } else if (this.shuffleMode === "on") {
-        this.shuffleMode = "heartbeat";
       } else {
         this.shuffleMode = "off";
       }
@@ -334,6 +336,7 @@ export const useStatusStore = defineStore("status", {
       "eqEnabled",
       "eqBands",
       "eqPreset",
+      "developerMode",
     ],
   },
 });

@@ -2,7 +2,7 @@
   <Transition name="fade" mode="out-in">
     <div
       :key="amLyricsData?.[0]?.words?.length"
-      :class="['lyric-am', { pure: statusStore.pureLyricMode }]"
+      :class="['lyric-am', { pure: statusStore.pureLyricMode, duet: hasDuet }]"
       :style="{
         '--amll-lp-color': 'rgb(var(--main-cover-color, 239 239 239))',
         '--amll-lp-hover-bg-color': 'rgba(var(--main-cover-color), 0.08)',
@@ -23,8 +23,9 @@
         :hidePassedLines="settingStore.hidePassedLines"
         :wordFadeWidth="settingStore.wordFadeWidth"
         :style="{
+          '--display-count-down-show': settingStore.countDownShow ? 'flex' : 'none',
           '--amll-lp-font-size': settingStore.lyricFontSize + 'px',
-          'font-weight': settingStore.lyricFontBold ? 'bold' : 'normal',
+          'font-weight': settingStore.lyricFontWeight,
           'font-family': settingStore.LyricFont !== 'follow' ? settingStore.LyricFont : '',
           ...lyricLangFontStyle(settingStore),
         }"
@@ -38,13 +39,11 @@
 </template>
 
 <script setup lang="ts">
-import { LyricPlayer } from "@applemusic-like-lyrics/vue";
 import { type LyricLine } from "@applemusic-like-lyrics/core";
 import { useMusicStore, useSettingStore, useStatusStore } from "@/stores";
 import { getLyricLanguage } from "@/utils/format";
 import { usePlayerController } from "@/core/player/PlayerController";
 import { cloneDeep } from "lodash-es";
-import "@applemusic-like-lyrics/core/style.css";
 import { lyricLangFontStyle } from "@/utils/lyricFontConfig";
 
 const musicStore = useMusicStore();
@@ -56,6 +55,9 @@ const lyricPlayerRef = ref<any | null>(null);
 
 // 实时播放进度
 const playSeek = ref<number>(player.getSeek() + statusStore.getSongOffset(musicStore.playSong?.id));
+
+// 是否有对唱行
+const hasDuet = computed(() => amLyricsData.value?.some((line) => line.isDuet) ?? false);
 
 // 实时更新播放进度
 const { pause: pauseSeek, resume: resumeSeek } = useRafFn(() => {
@@ -76,7 +78,22 @@ const amLyricsData = computed(() => {
   // 简单检查歌词有效性
   if (!Array.isArray(lyrics) || lyrics.length === 0) return [];
 
-  return cloneDeep(lyrics) as LyricLine[];
+  const clonedLyrics = cloneDeep(lyrics) as LyricLine[];
+
+  // 检查是否要不显示某一部分并删去
+  const showTran = settingStore.showTran;
+  const showRoma = settingStore.showRoma;
+  const showWordsRoma = settingStore.showWordsRoma;
+
+  if (!showTran || !showRoma || !showWordsRoma) {
+    clonedLyrics.forEach((line) => {
+      if (!showTran) line.translatedLyric = "";
+      if (!showRoma) line.romanLyric = "";
+      if (!showWordsRoma) line.words.forEach((word) => (word.romanWord = ""));
+    });
+  }
+
+  return clonedLyrics;
 });
 
 // 进度跳转
@@ -98,6 +115,8 @@ const processLyricLanguage = (player = lyricPlayerRef.value) => {
   for (let e of lyricLineObjects) {
     // 获取歌词行内容 (合并逐字歌词为一句)
     const content = e.lyricLine.words.map((word: any) => word.word).join("");
+    // 跳过空行
+    if (!content) continue;
     // 获取歌词语言
     const lang = getLyricLanguage(content);
     // 为主歌词设置 lang 属性 (firstChild 获取主歌词 不为翻译和音译设置属性)
@@ -151,18 +170,26 @@ onBeforeUnmount(() => {
     top: 0;
     padding-left: 10px;
     padding-right: 80px;
+
+    div {
+      div[class^="_interludeDots"] {
+        display: var(--display-count-down-show);
+      }
+    }
   }
 
   &.pure {
-    text-align: center;
+    &:not(.duet) {
+      text-align: center;
+
+      :deep(.am-lyric) div {
+        transform-origin: center;
+      }
+    }
 
     :deep(.am-lyric) {
       margin: 0;
       padding: 0 80px;
-
-      div {
-        transform-origin: center;
-      }
     }
   }
 

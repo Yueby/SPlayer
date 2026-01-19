@@ -86,6 +86,13 @@
         </div>
         <n-button type="primary" strong secondary @click="openFontManager"> 配置 </n-button>
       </n-card>
+      <n-card class="set-item">
+        <div class="label">
+          <n-text class="name">自定义代码注入</n-text>
+          <n-text class="tip" :depth="3"> 注入自定义 CSS 和 JavaScript 代码 </n-text>
+        </div>
+        <n-button type="primary" strong secondary @click="openCustomCode"> 配置 </n-button>
+      </n-card>
     </div>
     <div class="set-list">
       <n-h3 prefix="bar"> 杂项设置 </n-h3>
@@ -115,20 +122,6 @@
           <n-text class="tip" :depth="3">是否显示歌单的封面，如果有</n-text>
         </div>
         <n-switch class="set" v-model:value="settingStore.menuShowCover" :round="false" />
-      </n-card>
-      <n-card class="set-item">
-        <div class="label">
-          <n-text class="name">本地文件夹显示模式</n-text>
-          <n-text class="tip" :depth="3">选择本地音乐页面文件夹的显示方式</n-text>
-        </div>
-        <n-select
-          class="set"
-          v-model:value="settingStore.localFolderDisplayMode"
-          :options="[
-            { label: '标签页模式', value: 'tab' },
-            { label: '下拉筛选模式', value: 'dropdown' },
-          ]"
-        />
       </n-card>
       <n-card class="set-item">
         <div class="label">
@@ -304,17 +297,24 @@
 <script setup lang="ts">
 import type { SelectOption } from "naive-ui";
 import { useDataStore, useMusicStore, useSettingStore, useStatusStore } from "@/stores";
-import { isDev, isElectron } from "@/utils/env";
+import { isElectron } from "@/utils/env";
 import { isEmpty } from "lodash-es";
 import themeColor from "@/assets/data/themeColor.json";
-import { openSidebarHideManager, openHomePageSectionManager, openFontManager } from "@/utils/modal";
+import {
+  openSidebarHideManager,
+  openHomePageSectionManager,
+  openFontManager,
+  openCustomCode,
+} from "@/utils/modal";
 import { sendRegisterProtocol } from "@/utils/protocol";
 import { getCoverColor } from "@/utils/color";
+import { usePlayerController } from "@/core/player/PlayerController";
 
 const dataStore = useDataStore();
 const musicStore = useMusicStore();
 const settingStore = useSettingStore();
 const statusStore = useStatusStore();
+const player = usePlayerController();
 
 // 是否开启在线服务
 const useOnlineService = ref(settingStore.useOnlineService);
@@ -347,9 +347,11 @@ const modeChange = (val: boolean) => {
       content: "确定开启软件的在线服务？更改将在热重载后生效！",
       positiveText: "开启",
       negativeText: "取消",
-      onPositiveClick: () => {
+      onPositiveClick: async () => {
         useOnlineService.value = true;
         settingStore.useOnlineService = true;
+        // 清空播放列表
+        await player.cleanPlayList();
         // 清理播放数据
         dataStore.$reset();
         musicStore.$reset();
@@ -363,21 +365,22 @@ const modeChange = (val: boolean) => {
   } else {
     window.$dialog.warning({
       title: "关闭在线服务",
-      content:
-        "确定关闭软件的在线服务？将关闭包括搜索、登录、在线音乐播放等在内的全部在线服务，并且将会退出登录状态，软件将会变为本地播放器！更改将在重启后生效！",
+      content: "确定关闭软件的在线服务？关闭后将只能播放本地音乐！更改将在热重载后生效！",
       positiveText: "关闭",
       negativeText: "取消",
-      onPositiveClick: () => {
+      onPositiveClick: async () => {
         useOnlineService.value = false;
         settingStore.useOnlineService = false;
+        // 清空播放列表
+        await player.cleanPlayList();
         // 清理播放数据
         dataStore.$reset();
         musicStore.$reset();
         // 清空本地数据
         localStorage.removeItem("data-store");
         localStorage.removeItem("music-store");
-        // 重启
-        if (!isDev) window.electron.ipcRenderer.send("win-restart");
+        // 热重载
+        window.location.reload();
       },
       onNegativeClick: () => {
         useOnlineService.value = true;
