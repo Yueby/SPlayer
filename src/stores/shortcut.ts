@@ -59,11 +59,11 @@ export const useShortcutStore = defineStore("shortcut", {
         globalShortcut: "CmdOrCtrl+Shift+Down",
       },
       // 桌面歌词
-      "toggle-desktop-lyric": {
-        name: "桌面歌词",
-        shortcut: "CmdOrCtrl+KeyD",
-        globalShortcut: "CmdOrCtrl+Shift+D",
-      },
+      // "toggle-desktop-lyric": {
+      //   name: "桌面歌词",
+      //   shortcut: "CmdOrCtrl+KeyD",
+      //   globalShortcut: "CmdOrCtrl+Shift+D",
+      // },
       // 打开播放界面
       openPlayer: {
         name: "打开播放界面",

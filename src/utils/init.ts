@@ -138,9 +138,9 @@ const keyDownEvent = debounce((event: KeyboardEvent) => {
         case "volumeDown":
           player.setVolume("down");
           break;
-        case "toggle-desktop-lyric":
-          player.toggleDesktopLyric();
-          break;
+        // case "toggle-desktop-lyric":
+        //   player.toggleDesktopLyric();
+        //   break;
         case "openPlayer":
           // 打开播放界面（任意界面）
           statusStore.showFullPlayer = true;
