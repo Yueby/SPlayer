@@ -1,12 +1,12 @@
+import packageJson from "@/../package.json";
+import { mediaSessionManager } from "@/core/player/MediaSessionManager";
+import { usePlayerController } from "@/core/player/PlayerController";
+import { useDownloadManager } from "@/core/resource/DownloadManager";
 import { useDataStore, useSettingStore, useShortcutStore, useStatusStore } from "@/stores";
-import { useEventListener } from "@vueuse/core";
 import { openUserAgreement } from "@/utils/modal";
+import { useEventListener } from "@vueuse/core";
 import { debounce } from "lodash-es";
 import { isElectron } from "./env";
-import { usePlayerController } from "@/core/player/PlayerController";
-import { mediaSessionManager } from "@/core/player/MediaSessionManager";
-import { useDownloadManager } from "@/core/resource/DownloadManager";
-import packageJson from "@/../package.json";
 import log from "./log";
 
 // 应用初始化时需要执行的操作

@@ -17,7 +17,7 @@ interface ShortcutStore {
     playNext: ShortcutType;
     volumeUp: ShortcutType;
     volumeDown: ShortcutType;
-    "toggle-desktop-lyric": ShortcutType;
+    // "toggle-desktop-lyric": ShortcutType;
     openPlayer: ShortcutType;
     openPlayList: ShortcutType;
     closePlayer: ShortcutType;
@@ -58,7 +58,7 @@ export const useShortcutStore = defineStore("shortcut", {
         shortcut: "CmdOrCtrl+ArrowDown",
         globalShortcut: "CmdOrCtrl+Shift+Down",
       },
-      // 桌面歌词
+      // // 桌面歌词
       // "toggle-desktop-lyric": {
       //   name: "桌面歌词",
       //   shortcut: "CmdOrCtrl+KeyD",
